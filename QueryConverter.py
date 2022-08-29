@@ -191,6 +191,10 @@ class Options:
         self.debug = False
         self.dry_run = False
 
+    def __str__(self):
+
+        return f'Options[debug={self.debug},dry_run={self.dry_run}]'
+
 
 def save_query_groups(query_groups):
     logger.debug('Saving query groups')
