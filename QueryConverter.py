@@ -1,5 +1,6 @@
 """Convert team-level queries to the equivalent project-level queries."""
 
+import argparse
 import hashlib
 import logging
 import sys
@@ -236,8 +237,15 @@ def convert_queries(options):
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true', dest='debug',
+                        default=False)
+    parser.add_argument('--dry-run', action='store_true', dest='dry_run',
+                        default=False)
+    args = parser.parse_args()
+
     options = Options()
-    options.debug = True
-    options.dry_run = True
+    options.debug = args.debug
+    options.dry_run = args.dry_run
 
     convert_queries(options)
