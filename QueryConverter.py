@@ -41,6 +41,18 @@ STATUS = 'Status'
 TEAM = 'Team'
 
 
+class Options:
+
+    def __init__(self):
+
+        self.debug = False
+        self.dry_run = False
+
+    def __str__(self):
+
+        return f'Options[debug={self.debug},dry_run={self.dry_run}]'
+
+
 def create_team_project_map():
     logger.debug('Creating team->project map')
     projects_api = ProjectsAPI()
@@ -99,6 +111,44 @@ def create_new_query_groups(query_groups, team_project_map):
                     new_query_groups.append(pqg)
 
     return new_query_groups
+
+
+def save_query_groups(query_groups):
+    logger.debug('Saving query groups')
+    upload_queries(query_groups)
+
+
+def validate_query_groups(query_groups, new_query_groups):
+    """Make sure that all the query groups and queries in
+    new_query_groups are in query_groups."""
+    for qg in new_query_groups:
+        logging.debug(f'Checking query group {qg[NAME]}')
+        qg1 = find_query_group(query_groups, qg)
+        if qg1:
+            logging.debug(f'Found query group {qg[NAME]}')
+            for q in qg[QUERIES]:
+                q1 = find_query(qg1, q)
+                if q1:
+                    logging.debug(f'Found query {q[NAME]}')
+                else:
+                    logging.error(f'Query {q[NAME]} not found')
+        else:
+            logger.error(f'Query group {qg[NAME]} not found.')
+
+
+def convert_queries(options):
+
+    team_project_map = create_team_project_map()
+    query_groups = get_query_groups()
+    if options.debug:
+        dump_query_groups(query_groups, 'Old query groups')
+    new_query_groups = create_new_query_groups(query_groups, team_project_map)
+    if options.debug:
+        dump_query_groups(new_query_groups, 'New query groups')
+    if not options.dry_run:
+        save_query_groups(new_query_groups)
+        query_groups = get_query_groups()
+        validate_query_groups(query_groups, new_query_groups)
 
 
 # Utility functions
@@ -185,56 +235,6 @@ def dump_queries(queries):
         md5.update(q[SOURCE].encode('utf-8'))
         print(f'         MD5: {md5.hexdigest()}')
         i = i + 1
-
-
-class Options:
-
-    def __init__(self):
-
-        self.debug = False
-        self.dry_run = False
-
-    def __str__(self):
-
-        return f'Options[debug={self.debug},dry_run={self.dry_run}]'
-
-
-def save_query_groups(query_groups):
-    logger.debug('Saving query groups')
-    upload_queries(query_groups)
-
-
-def validate_query_groups(query_groups, new_query_groups):
-    """Make sure that all the query groups and queries in
-    new_query_groups are in query_groups."""
-    for qg in new_query_groups:
-        logging.debug(f'Checking query group {qg[NAME]}')
-        qg1 = find_query_group(query_groups, qg)
-        if qg1:
-            logging.debug(f'Found query group {qg[NAME]}')
-            for q in qg[QUERIES]:
-                q1 = find_query(qg1, q)
-                if q1:
-                    logging.debug(f'Found query {q[NAME]}')
-                else:
-                    logging.error(f'Query {q[NAME]} not found')
-        else:
-            logger.error(f'Query group {qg[NAME]} not found.')
-
-
-def convert_queries(options):
-
-    team_project_map = create_team_project_map()
-    query_groups = get_query_groups()
-    if options.debug:
-        dump_query_groups(query_groups, 'Old query groups')
-    new_query_groups = create_new_query_groups(query_groups, team_project_map)
-    if options.debug:
-        dump_query_groups(new_query_groups, 'New query groups')
-    if not options.dry_run:
-        save_query_groups(new_query_groups)
-        query_groups = get_query_groups()
-        validate_query_groups(query_groups, new_query_groups)
 
 
 if __name__ == '__main__':
