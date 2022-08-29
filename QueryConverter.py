@@ -41,18 +41,6 @@ STATUS = 'Status'
 TEAM = 'Team'
 
 
-class Options:
-
-    def __init__(self):
-
-        self.debug = False
-        self.dry_run = False
-
-    def __str__(self):
-
-        return f'Options[debug={self.debug},dry_run={self.dry_run}]'
-
-
 def create_team_project_map():
     logger.debug('Creating team->project map')
     projects_api = ProjectsAPI()
@@ -245,9 +233,4 @@ if __name__ == '__main__':
     parser.add_argument('--dry-run', action='store_true', dest='dry_run',
                         default=False)
     args = parser.parse_args()
-
-    options = Options()
-    options.debug = args.debug
-    options.dry_run = args.dry_run
-
-    convert_queries(options)
+    convert_queries(args)
