@@ -110,16 +110,16 @@ def validate_query_groups(query_groups, new_query_groups):
     """Make sure that all the query groups and queries in
     new_query_groups are in query_groups."""
     for qg in new_query_groups:
-        logging.debug(f'Checking query group {qg[NAME]}')
+        logger.debug(f'Checking query group {qg[NAME]}')
         qg1 = find_query_group(query_groups, qg)
         if qg1:
-            logging.debug(f'Found query group {qg[NAME]}')
+            logger.debug(f'Found query group {qg[NAME]}')
             for q in qg[QUERIES]:
                 q1 = find_query(qg1, q)
                 if q1:
-                    logging.debug(f'Found query {q[NAME]}')
+                    logger.debug(f'Found query {q[NAME]}')
                 else:
-                    logging.error(f'Query {q[NAME]} not found')
+                    logger.error(f'Query {q[NAME]} not found')
         else:
             logger.error(f'Query group {qg[NAME]} not found.')
 
