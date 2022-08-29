@@ -14,6 +14,8 @@ handler.setLevel(logging.DEBUG)
 logger = logging.getLogger('QueryConverter')
 logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
+formatter = logging.Formatter(fmt='%(asctime)s: %(levelname)s: %(name)s: %(msg)s')
+handler.setFormatter(formatter)
 
 # Constants
 DESCRIPTION = 'Description'
