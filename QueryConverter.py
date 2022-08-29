@@ -103,7 +103,10 @@ def create_new_query_groups(query_groups, team_project_map):
 
 def save_query_groups(query_groups):
     logger.debug('Saving query groups')
-    upload_queries(query_groups)
+    resp = upload_queries(query_groups)
+    if not resp[IS_SUCCESFULL]:
+        logger.error(f'Error uploading queries: {resp[ERROR_MESSAGE]}')
+        sys.exit(1)
 
 
 def validate_query_groups(query_groups, new_query_groups):
