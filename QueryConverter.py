@@ -1,11 +1,11 @@
 """Convert team-level queries to the equivalent project-level queries."""
 
-from CheckmarxPythonSDK.CxPortalSoapApiSDK import get_query_collection, upload_queries
-from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI
-
 import hashlib
 import logging
 import sys
+
+from CheckmarxPythonSDK.CxPortalSoapApiSDK import get_query_collection, upload_queries
+from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI
 
 # Logging
 handler = logging.StreamHandler()
