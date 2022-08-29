@@ -84,7 +84,7 @@ def create_new_query_groups(query_groups, team_project_map):
                     logger.debug(f'  Processing query {q[NAME]}')
                     # Has this query already been customized at the project level?
                     oldpg = find_project_query_group(query_groups, project_id)
-                    if oldpg and find_project_query(oldpg, q[NAME]):
+                    if oldpg and find_query_by_name(oldpg, q[NAME]):
                         logger.debug(f'    Query {q[NAME]} already customized at project level')
                         continue
                     logger.debug(f'    Adding query {q[NAME]} to query group')
@@ -106,9 +106,33 @@ def find_project_query_group(query_groups, project_id):
         if qg[PACKAGE_TYPE] == PROJECT and qg[PROJECT_ID] == project_id:
             return qg
 
+    return None
 
-def find_project_query(query_group, query_name):
-    """Find the named query in the specified query group."""
+
+def find_query_group(query_groups, query_group):
+    """Find the specified query_group in the specified list of query
+    groups."""
+    for qg in query_groups:
+        if (qg[NAME] == query_group[NAME] and qg[PACKAGE_TYPE] == query_group[PACKAGE_TYPE]):
+            return qg
+
+    return None
+
+
+def find_query(query_group, query):
+    """Find the specified query in the specified query group.
+
+    Both the query name and the query source are compared.
+    """
+    for q in query_group[QUERIES]:
+        if q[NAME] == query[NAME] and q[SOURCE] == query[SOURCE]:
+            return q
+
+    return None
+
+
+def find_query_by_name(query_group, query_name):
+    """Find the specified query in the specified query group."""
     for q in query_group[QUERIES]:
         if q[NAME] == query_name:
             return q
@@ -176,7 +200,19 @@ def save_query_groups(query_groups):
 def validate_query_groups(query_groups, new_query_groups):
     """Make sure that all the query groups and queries in
     new_query_groups are in query_groups."""
-    pass
+    for qg in new_query_groups:
+        logging.debug(f'Checking query group {qg[NAME]}')
+        qg1 = find_query_group(query_groups, qg)
+        if qg1:
+            logging.debug(f'Found query group {qg[NAME]}')
+            for q in qg[QUERIES]:
+                q1 = find_query(qg1, q)
+                if q1:
+                    logging.debug(f'Found query {q[NAME]}')
+                else:
+                    logging.error(f'Query {q[NAME]} not found')
+        else:
+            logger.error(f'Query group {qg[NAME]} not found.')
 
 
 def convert_queries(options):
