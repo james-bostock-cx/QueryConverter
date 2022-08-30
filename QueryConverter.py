@@ -18,8 +18,10 @@ formatter = logging.Formatter(fmt='%(asctime)s: %(levelname)s: %(name)s: %(msg)s
 handler.setFormatter(formatter)
 
 # Constants
+CX_DESCRIPTION_ID = 'CxDescriptionID'
 DESCRIPTION = 'Description'
 ERROR_MESSAGE = 'ErrorMessage'
+IMPACTS = 'Impacts'
 IS_ENCRYPTED = 'IsEncrypted'
 IS_READONLY = 'IsReadOnly'
 IS_SUCCESFULL = 'IsSuccesfull'
@@ -29,13 +31,15 @@ LANGUAGE_STATE_DATE = 'LanguageStateDate'
 NAME = 'Name'
 OWNING_TEAM = 'OwningTeam'
 PACKAGE_FULL_NAME = 'PackageFullName'
+PACKAGE_ID = 'PackageId'
 PACKAGE_TYPE = 'PackageType'
-PACKAGE_TYPE_NAME = 'PAckageTypeName'
+PACKAGE_TYPE_NAME = 'PackageTypeName'
 PROJECT = 'Project'
 PROJECT_ID = 'ProjectId'
 QUERIES = 'Queries'
 QUERY_GROUPS = 'QueryGroups'
 QUERY_ID = 'QueryId'
+QUERY_VERSION_CODE = 'QueryVersionCode'
 SOURCE = 'Source'
 STATUS = 'Status'
 TEAM = 'Team'
@@ -91,6 +95,14 @@ def create_new_query_groups(query_groups, team_project_map):
                         logger.debug(f'    Query {q[NAME]} already customized at project level')
                         continue
                     logger.debug(f'    Adding query {q[NAME]} to query group')
+
+                    if oldpg:
+                        q[PACKAGE_ID] = oldpg[PACKAGE_ID]
+                    else:
+                        q[PACKAGE_ID] = -1
+                    q[QUERY_ID] = 0
+                    q[QUERY_VERSION_CODE] = 0
+                    q[STATUS] = 'New'
                     pqg[QUERIES].append(q)
 
                 # Only add the query group if it has one or more queries
@@ -188,17 +200,25 @@ def create_project_query_group(tqg, project_id):
     """Create a project query group for the specified project using
     the specified team query group as a template."""
     nqg = {}
-    nqg[DESCRIPTION] = tqg[DESCRIPTION]
+    if tqg[DESCRIPTION]:
+        nqg[DESCRIPTION] = tqg[DESCRIPTION]
+    else:
+        nqg[DESCRIPTION] = ''
+    nqg[IMPACTS] = []
     nqg[IS_ENCRYPTED] = tqg[IS_ENCRYPTED]
+    nqg[IS_READONLY] = False
     nqg[LANGUAGE] = tqg[LANGUAGE]
     nqg[LANGUAGE_NAME] = tqg[LANGUAGE_NAME]
     nqg[LANGUAGE_STATE_DATE] = tqg[LANGUAGE_STATE_DATE]
     nqg[NAME] = tqg[NAME]
     nqg[OWNING_TEAM] = 0
     nqg[PACKAGE_FULL_NAME] = f'{tqg[LANGUAGE_NAME]}:Project_{project_id}:{tqg[NAME]}'
+    nqg[PACKAGE_ID] = 0
     nqg[PACKAGE_TYPE] = PROJECT
+    nqg[PACKAGE_TYPE_NAME] = f'CxProject_{project_id}'
     nqg[PROJECT_ID] = project_id
     nqg[QUERIES] = []
+    nqg[STATUS] = tqg[STATUS]
 
     return nqg
 
