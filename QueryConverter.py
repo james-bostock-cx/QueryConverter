@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import logging
+import pprint
 import sys
 
 from CheckmarxPythonSDK.CxPortalSoapApiSDK import get_query_collection, upload_queries
@@ -152,6 +153,9 @@ def convert_queries(options):
     new_query_groups = create_new_query_groups(query_groups, team_project_map)
     if options.debug:
         dump_query_groups(new_query_groups, 'New query groups')
+    if options.pretty_print:
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(new_query_groups)
     if not options.dry_run:
         save_query_groups(new_query_groups)
         query_groups = get_query_groups()
@@ -261,6 +265,8 @@ if __name__ == '__main__':
                         default=False)
     parser.add_argument('--dry-run', action='store_true', dest='dry_run',
                         default=False)
+    parser.add_argument('--pretty-print', action='store_true',
+                        dest='pretty_print', default=False)
     parser.add_argument('teams', type=int, nargs='*')
     args = parser.parse_args()
     convert_queries(args)
