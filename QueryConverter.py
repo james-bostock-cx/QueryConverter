@@ -57,7 +57,7 @@ def create_team_project_map():
     return team_project_map
 
 
-def get_query_groups():
+def get_query_groups(options):
     # Retrieve queries from CxSAST
     logger.debug('Retrieving queries...')
     resp = get_query_collection()
@@ -66,7 +66,10 @@ def get_query_groups():
         sys.exit(1)
 
     query_groups = [qg for qg in resp[QUERY_GROUPS]
-                    if qg[PACKAGE_TYPE] in [TEAM, PROJECT]]
+                    if ((qg[PACKAGE_TYPE] == PROJECT) or
+                        (qg[PACKAGE_TYPE] == TEAM and
+                         (not options.teams or
+                          qg[OWNING_TEAM] in options.teams)))]
 
     return query_groups
 
@@ -142,7 +145,8 @@ def validate_query_groups(query_groups, new_query_groups):
 def convert_queries(options):
 
     team_project_map = create_team_project_map()
-    query_groups = get_query_groups()
+    query_groups = get_query_groups(options)
+
     if options.debug:
         dump_query_groups(query_groups, 'Old query groups')
     new_query_groups = create_new_query_groups(query_groups, team_project_map)
@@ -257,5 +261,6 @@ if __name__ == '__main__':
                         default=False)
     parser.add_argument('--dry-run', action='store_true', dest='dry_run',
                         default=False)
+    parser.add_argument('teams', type=int, nargs='*')
     args = parser.parse_args()
     convert_queries(args)
