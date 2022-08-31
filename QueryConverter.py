@@ -133,10 +133,10 @@ def validate_query_groups(query_groups, new_query_groups):
     """Make sure that all the query groups and queries in
     new_query_groups are in query_groups."""
     for qg in new_query_groups:
-        logger.debug(f'Checking query group {qg[NAME]}')
+        logger.debug(f'Checking query group {qg[PACKAGE_FULL_NAME]}')
         qg1 = find_query_group(query_groups, qg)
         if qg1:
-            logger.debug(f'Found query group {qg[NAME]}')
+            logger.debug(f'Found query group {qg1[PACKAGE_FULL_NAME]}')
             for q in qg[QUERIES]:
                 q1 = find_query(qg1, q)
                 if q1:
@@ -144,7 +144,7 @@ def validate_query_groups(query_groups, new_query_groups):
                 else:
                     logger.error(f'Query {q[NAME]} not found')
         else:
-            logger.error(f'Query group {qg[NAME]} not found.')
+            logger.error(f'Query group {qg[PACKAGE_FULL_NAME]} not found.')
 
 
 def convert_queries(options):
@@ -180,9 +180,14 @@ def find_project_query_group(query_groups, project_id):
 def find_query_group(query_groups, query_group):
     """Find the specified query_group in the specified list of query
     groups."""
+    logger.debug(f'Searching query groups for {query_group[PACKAGE_FULL_NAME]}')
     for qg in query_groups:
-        if (qg[NAME] == query_group[NAME] and qg[PACKAGE_TYPE] == query_group[PACKAGE_TYPE]):
-            return qg
+        logger.debug(f'  qg[PACKAGE_FULL_NAME]: {qg[PACKAGE_FULL_NAME]}')
+        if qg[PACKAGE_FULL_NAME] == query_group[PACKAGE_FULL_NAME]:
+            if qg[PACKAGE_TYPE] == query_group[PACKAGE_TYPE]:
+                return qg
+            else:
+                logger.debug(f'Package types do not match ({qg[PACKAGE_TYPE]} != {query_group[PACKAGE_TYPE]})')
 
     return None
 
@@ -192,9 +197,15 @@ def find_query(query_group, query):
 
     Both the query name and the query source are compared.
     """
+    logger.debug(f'Searching query group {query_group[PACKAGE_FULL_NAME]} for query {query[NAME]}')
     for q in query_group[QUERIES]:
-        if q[NAME] == query[NAME] and q[SOURCE] == query[SOURCE]:
-            return q
+        logger.debug(f'  q[NAME]: {q[NAME]}')
+        if q[NAME] == query[NAME]:
+            if q[SOURCE] == query[SOURCE]:
+                return q
+            else:
+                logger.debug(f'  Found {q[NAME]} but source code is different')
+
 
     return None
 
