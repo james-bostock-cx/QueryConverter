@@ -162,7 +162,7 @@ def convert_queries(options):
         pp.pprint(new_query_groups)
     if not options.dry_run:
         save_query_groups(new_query_groups)
-        query_groups = get_query_groups()
+        query_groups = get_query_groups(options)
         validate_query_groups(query_groups, new_query_groups)
 
 
