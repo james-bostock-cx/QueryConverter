@@ -224,7 +224,7 @@ def create_project_query_group(tqg, project_id):
     nqg[LANGUAGE_STATE_DATE] = tqg[LANGUAGE_STATE_DATE]
     nqg[NAME] = tqg[NAME]
     nqg[OWNING_TEAM] = 0
-    nqg[PACKAGE_FULL_NAME] = f'{tqg[LANGUAGE_NAME]}:Project_{project_id}:{tqg[NAME]}'
+    nqg[PACKAGE_FULL_NAME] = f'{tqg[LANGUAGE_NAME]}:CxProject_{project_id}:{tqg[NAME]}'
     nqg[PACKAGE_ID] = 0
     nqg[PACKAGE_TYPE] = PROJECT
     nqg[PACKAGE_TYPE_NAME] = f'CxProject_{project_id}'
