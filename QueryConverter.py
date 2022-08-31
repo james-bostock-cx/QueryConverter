@@ -9,6 +9,8 @@ import sys
 from CheckmarxPythonSDK.CxPortalSoapApiSDK import get_query_collection, upload_queries
 from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI, ScansAPI
 
+_version = '0.1.0'
+
 # Logging
 handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
