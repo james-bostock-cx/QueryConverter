@@ -132,19 +132,31 @@ def save_query_groups(query_groups):
 def validate_query_groups(query_groups, new_query_groups):
     """Make sure that all the query groups and queries in
     new_query_groups are in query_groups."""
+    qg_total = 0
+    qg_failed = 0
+    q_total = 0
+    q_failed = 0
     for qg in new_query_groups:
         logger.debug(f'Checking query group {qg[PACKAGE_FULL_NAME]}')
+        qg_total = qg_total + 1
         qg1 = find_query_group(query_groups, qg)
         if qg1:
             logger.debug(f'Found query group {qg1[PACKAGE_FULL_NAME]}')
             for q in qg[QUERIES]:
+                q_total = q_total + 1
                 q1 = find_query(qg1, q)
                 if q1:
                     logger.debug(f'Found query {q[NAME]}')
                 else:
                     logger.error(f'Query {q[NAME]} not found')
+                    q_failed = q_failed + 1
         else:
             logger.error(f'Query group {qg[PACKAGE_FULL_NAME]} not found.')
+            qg_failed = qg_failed + 1
+
+    logger.info(f'Total query_groups: {qg_total}, total queries: {q_total}')
+    if qg_failed or q_failed:
+        logger.error(f'Failed query groups: {qg_failed}, failed queries: {q_failed}')
 
 
 def convert_queries(options):
