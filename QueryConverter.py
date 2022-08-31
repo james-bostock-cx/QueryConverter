@@ -7,7 +7,7 @@ import pprint
 import sys
 
 from CheckmarxPythonSDK.CxPortalSoapApiSDK import get_query_collection, upload_queries
-from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI
+from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI, ScansAPI
 
 # Logging
 handler = logging.StreamHandler()
@@ -82,6 +82,10 @@ def create_new_query_groups(query_groups, team_project_map):
         if qg[PACKAGE_TYPE] == TEAM:
             logger.debug(f'Processing query group {qg[NAME]} for team {qg[OWNING_TEAM]}')
             for project_id in team_project_map[qg[OWNING_TEAM]]:
+                project_languages = get_project_languages(project_id)
+                if qg[LANGUAGE] not in project_languages:
+                    logger.debug(f'  {qg[LANGUAGE]} not in project {project_id} languages ({project_languages})')
+                    continue
                 add_query_group = False
                 pqg = find_project_query_group(new_query_groups, project_id)
                 if pqg:
@@ -229,6 +233,24 @@ def create_project_query_group(tqg, project_id):
     nqg[STATUS] = tqg[STATUS]
 
     return nqg
+
+project_language_map = {}
+scans_api = ScansAPI()
+def get_project_languages(project_id):
+
+    if project_id not in project_language_map:
+        scans = scans_api.get_all_scans_for_project(project_id,
+                                                    "Finished",
+                                                    1)
+        if scans:
+            languages = []
+            for language in scans[0].scan_state.language_state_collection:
+                languages.append(language.language_id)
+            project_language_map[project_id] = languages
+        else:
+            logger.warn(f'No scans found for project {project_id}')
+
+    return project_language_map[project_id]
 
 
 # Debugging functions
