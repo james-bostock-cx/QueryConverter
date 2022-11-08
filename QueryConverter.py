@@ -47,83 +47,121 @@ SOURCE = 'Source'
 STATUS = 'Status'
 TEAM = 'Team'
 
+projects_api = ProjectsAPI()
+scans_api = ScansAPI()
 
-def create_team_project_map():
-    logger.debug('Creating team->project map')
-    projects_api = ProjectsAPI()
-    team_project_map = {}
-    for proj in projects_api.get_all_project_details():
-        proj_list = team_project_map.get(proj.team_id, [])
-        proj_list.append(proj.project_id)
-        team_project_map[proj.team_id] = proj_list
+class QueryCollection:
+    '''A collection of CxQL queries augmented with other data from the CxSAST instance.'''
 
-    return team_project_map
+    def __init__(self, options):
+
+        # Configuration options
+        self.options = options
+        # A mapping from team id to associated projects
+        self.team_project_map = self.create_team_project_map()
+        # A list of CxQL query groups, each potentially containing CxQL queries
+        self.query_groups = self.get_query_groups()
+        # A mapping of project ids to scanned languages (built on demand)
+        self.project_language_map = {}
+
+    def get_query_groups(self):
+
+        return self.query_groups
+
+    def create_team_project_map(self):
+        '''Creates a mapping from team ids to projects.'''
+        logger.debug('Creating team->project map')
+        team_project_map = {}
+        for proj in projects_api.get_all_project_details():
+            proj_list = team_project_map.get(proj.team_id, [])
+            proj_list.append(proj.project_id)
+            team_project_map[proj.team_id] = proj_list
+
+        logger.debug(f'Team->project map: {team_project_map}')
+        return team_project_map
 
 
-def get_query_groups(options):
-    # Retrieve queries from CxSAST
-    logger.debug('Retrieving queries...')
-    resp = get_query_collection()
-    if not resp[IS_SUCCESFULL]:
-        logger.error(f'Error retrieving queries: {resp[ERROR_MESSAGE]}')
-        sys.exit(1)
+    def get_query_groups(self):
+        '''Retrieves CxQL queries from CxSAST.'''
+        logger.debug('Retrieving queries...')
+        resp = get_query_collection()
+        if not resp[IS_SUCCESFULL]:
+            logger.error(f'Error retrieving queries: {resp[ERROR_MESSAGE]}')
+            sys.exit(1)
 
-    query_groups = [qg for qg in resp[QUERY_GROUPS]
-                    if ((qg[PACKAGE_TYPE] == PROJECT) or
-                        (qg[PACKAGE_TYPE] == TEAM and
-                         (not options.teams or
-                          qg[OWNING_TEAM] in options.teams)))]
+        query_groups = [qg for qg in resp[QUERY_GROUPS]
+                        if ((qg[PACKAGE_TYPE] == PROJECT) or
+                            (qg[PACKAGE_TYPE] == TEAM and
+                             (not self.options.teams or
+                              qg[OWNING_TEAM] in self.options.teams)))]
 
-    return query_groups
+        return query_groups
 
 
-def create_new_query_groups(query_groups, team_project_map):
-    new_query_groups = []
+    def create_new_query_groups(self):
+        new_query_groups = []
 
-    for qg in query_groups:
-        if qg[PACKAGE_TYPE] == TEAM:
-            logger.debug(f'Processing query group {qg[NAME]} for team {qg[OWNING_TEAM]}')
-            for project_id in team_project_map[qg[OWNING_TEAM]]:
-                project_languages = get_project_languages(project_id)
-                if qg[LANGUAGE] not in project_languages:
-                    logger.debug(f'  {qg[LANGUAGE]} not in project {project_id} languages ({project_languages})')
-                    continue
-                add_query_group = False
-                pqg = find_project_query_group(new_query_groups, project_id)
-                if pqg:
-                    logger.debug(f'  Query group already exists for project {project_id}')
-                else:
-                    logger.debug(f'  Creating new query group for project {project_id}')
-                    pqg = create_project_query_group(qg, project_id)
-                    add_query_group = True
-
-                for q in qg[QUERIES]:
-                    logger.debug(f'  Processing query {q[NAME]}')
-                    # Has this query already been customized at the project level?
-                    oldpg = find_project_query_group(query_groups, project_id)
-                    if oldpg and find_query_by_name(oldpg, q[NAME]):
-                        logger.debug(f'    Query {q[NAME]} already customized at project level')
+        for qg in self.query_groups:
+            if qg[PACKAGE_TYPE] == TEAM:
+                logger.debug(f'Processing query group {qg[NAME]} for team {qg[OWNING_TEAM]}')
+                for project_id in self.team_project_map[qg[OWNING_TEAM]]:
+                    project_languages = self.get_project_languages(project_id)
+                    if qg[LANGUAGE] not in project_languages:
+                        logger.debug(f'  {qg[LANGUAGE]} not in project {project_id} languages ({project_languages})')
                         continue
-                    logger.debug(f'    Adding query {q[NAME]} to query group')
-
-                    if oldpg:
-                        q[PACKAGE_ID] = oldpg[PACKAGE_ID]
+                    add_query_group = False
+                    pqg = self.find_project_query_group(new_query_groups, project_id)
+                    if pqg:
+                        logger.debug(f'  Query group already exists for project {project_id}')
                     else:
-                        q[PACKAGE_ID] = -1
-                    q[QUERY_ID] = 0
-                    q[QUERY_VERSION_CODE] = 0
-                    q[STATUS] = 'New'
-                    pqg[QUERIES].append(q)
+                        logger.debug(f'  Creating new query group for project {project_id}')
+                        pqg = self.create_project_query_group(qg, project_id)
+                        add_query_group = True
 
-                # Only add the query group if it has one or more queries
-                if pqg[QUERIES] and add_query_group:
-                    logger.debug(f'Adding query group {pqg[NAME]}')
-                    new_query_groups.append(pqg)
+                    for q in qg[QUERIES]:
+                        logger.debug(f'  Processing query {q[NAME]}')
+                        # Has this query already been customized at the project level?
+                        oldpg = self.find_project_query_group(query_groups, project_id)
+                        if oldpg and self.find_query_by_name(oldpg, q[NAME]):
+                            logger.debug(f'    Query {q[NAME]} already customized at project level')
+                            continue
+                        logger.debug(f'    Adding query {q[NAME]} to query group')
 
-    return new_query_groups
+                        if oldpg:
+                            q[PACKAGE_ID] = oldpg[PACKAGE_ID]
+                        else:
+                            q[PACKAGE_ID] = -1
+                        q[QUERY_ID] = 0
+                        q[QUERY_VERSION_CODE] = 0
+                        q[STATUS] = 'New'
+                        pqg[QUERIES].append(q)
+
+                    # Only add the query group if it has one or more queries
+                    if pqg[QUERIES] and add_query_group:
+                        logger.debug(f'Adding query group {pqg[NAME]}')
+                        new_query_groups.append(pqg)
+
+        return new_query_groups
+
+    def get_project_languages(project_id):
+
+        if project_id not in self.project_language_map:
+            scans = scans_api.get_all_scans_for_project(project_id,
+                                                        "Finished",
+                                                        1)
+            if scans:
+                languages = []
+                for language in scans[0].scan_state.language_state_collection:
+                    languages.append(language.language_id)
+                self.project_language_map[project_id] = languages
+            else:
+                logger.warn(f'No scans found for project {project_id}')
+
+        return self.project_language_map[project_id]
 
 
 def save_query_groups(query_groups):
+    '''Saves the specified query groups back to CxSAST.'''
     logger.debug('Saving query groups')
     resp = upload_queries(query_groups)
     if not resp[IS_SUCCESFULL]:
@@ -163,12 +201,12 @@ def validate_query_groups(query_groups, new_query_groups):
 
 def convert_queries(options):
 
-    team_project_map = create_team_project_map()
-    query_groups = get_query_groups(options)
+    query_collection = QueryCollection(options)
+    query_groups = query_collection.get_query_groups()
 
     if options.debug:
         dump_query_groups(query_groups, 'Old query groups')
-    new_query_groups = create_new_query_groups(query_groups, team_project_map)
+    new_query_groups = query_collection.create_new_query_groups()
     if options.debug:
         dump_query_groups(new_query_groups, 'New query groups')
     if options.pretty_print:
@@ -176,7 +214,8 @@ def convert_queries(options):
         pp.pprint(new_query_groups)
     if not options.dry_run:
         save_query_groups(new_query_groups)
-        query_groups = get_query_groups(options)
+        new_query_collection = QueryCollection(options)
+        query_groups = new_query_collection.get_query_groups()
         validate_query_groups(query_groups, new_query_groups)
 
 
@@ -258,25 +297,6 @@ def create_project_query_group(tqg, project_id):
     nqg[STATUS] = tqg[STATUS]
 
     return nqg
-
-project_language_map = {}
-scans_api = ScansAPI()
-def get_project_languages(project_id):
-
-    if project_id not in project_language_map:
-        scans = scans_api.get_all_scans_for_project(project_id,
-                                                    "Finished",
-                                                    1)
-        if scans:
-            languages = []
-            for language in scans[0].scan_state.language_state_collection:
-                languages.append(language.language_id)
-            project_language_map[project_id] = languages
-        else:
-            logger.warn(f'No scans found for project {project_id}')
-
-    return project_language_map[project_id]
-
 
 # Debugging functions
 def dump_query_groups(query_groups, message):
