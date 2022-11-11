@@ -7,7 +7,7 @@ import pprint
 import sys
 
 from CheckmarxPythonSDK.CxPortalSoapApiSDK import get_query_collection, upload_queries
-from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI, ScansAPI
+from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI, ScansAPI, TeamAPI
 
 _version = '0.1.0'
 
@@ -60,6 +60,8 @@ class QueryCollection:
         self.options = options
         # A mapping from team id to associated projects
         self.team_project_map = self.create_team_project_map()
+        # A mapping from team ids to lists of ancestor team ids
+        self.team_ancestry_map = self.create_team_ancestry_map()
         # A list of CxQL query groups, each potentially containing CxQL queries
         self.query_groups = self.retrieve_query_groups()
         # A mapping of project ids to scanned languages (built on demand)
@@ -80,6 +82,25 @@ class QueryCollection:
 
         logger.debug(f'Team->project map: {team_project_map}')
         return team_project_map
+
+    def create_team_ancestry_map(self):
+
+        team_ancestry_map = {}
+        team_api = TeamAPI()
+
+        all_teams = team_api.get_all_teams()
+        for team in all_teams:
+            ancestry = []
+            parent_id = team.parent_id
+            while parent_id > 0:
+                ancestry.append(parent_id)
+                for team2 in all_teams:
+                    if team2.team_id == parent_id:
+                        parent_id = team2.parent_id
+            team_ancestry_map[team.team_id] = ancestry
+
+        logger.debug(f'team_ancestry_map: {team_ancestry_map}')
+        return team_ancestry_map
 
     def retrieve_query_groups(self):
         '''Retrieves CxQL queries from CxSAST.'''
