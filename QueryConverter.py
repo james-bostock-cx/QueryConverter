@@ -65,6 +65,7 @@ class QueryCollection:
         self.team_ancestry_map = self.create_team_ancestry_map()
         # A list of CxQL query groups, each potentially containing CxQL queries
         self.query_groups = self.retrieve_query_groups()
+        self.create_query_maps()
         # A mapping of project ids to scanned languages (built on demand)
         self.project_language_map = {}
 
@@ -117,6 +118,30 @@ class QueryCollection:
                               qg[OWNING_TEAM] in self.options.teams)))]
 
         return query_groups
+
+    def create_query_maps(self):
+
+        # A mapping from project id to a list of custom queries
+        self.project_query_map = {}
+        # A mapping from query id to owning query group
+        self.query_query_group_map = {}
+        # A mapping from team id to a list of custom queries
+        self.team_query_map = {}
+
+        for qg in self.query_groups:
+            print(f'PackageType: {qg[PACKAGE_TYPE]}')
+            for q in qg[QUERIES]:
+                self.query_query_group_map[q[QUERY_ID]] = qg
+                if qg[PACKAGE_TYPE] == PROJECT:
+                    project_id = qg[PROJECT_ID]
+                    queries = self.project_query_map.get(project_id, [])
+                    queries.append(q)
+                    self.project_query_map[project_id] = queries
+                elif qg[PACKAGE_TYPE] == TEAM:
+                    team_id = qg[OWNING_TEAM]
+                    queries = self.team_query_map.get(team_id, [])
+                    queries.append(q)
+                    self.team_query_map[team_id] = queries
 
     def create_new_query_groups(self):
         new_query_groups = []
