@@ -143,7 +143,7 @@ class QueryCollection:
 
         return new_query_groups
 
-    def get_project_languages(project_id):
+    def get_project_languages(self, project_id):
 
         if project_id not in self.project_language_map:
             scans = scans_api.get_all_scans_for_project(project_id,
