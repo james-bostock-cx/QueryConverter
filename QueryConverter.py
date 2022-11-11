@@ -90,7 +90,7 @@ class QueryCollection:
 
         all_teams = team_api.get_all_teams()
         for team in all_teams:
-            ancestry = []
+            ancestry = [team.team_id]
             parent_id = team.parent_id
             while parent_id > 0:
                 ancestry.append(parent_id)
