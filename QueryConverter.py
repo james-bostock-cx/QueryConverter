@@ -49,6 +49,7 @@ TEAM = 'Team'
 
 projects_api = ProjectsAPI()
 scans_api = ScansAPI()
+team_api = TeamAPI()
 
 
 class QueryCollection:
@@ -86,7 +87,6 @@ class QueryCollection:
     def create_team_ancestry_map(self):
 
         team_ancestry_map = {}
-        team_api = TeamAPI()
 
         all_teams = team_api.get_all_teams()
         for team in all_teams:
