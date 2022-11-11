@@ -61,7 +61,7 @@ class QueryCollection:
         # A mapping from team id to associated projects
         self.team_project_map = self.create_team_project_map()
         # A list of CxQL query groups, each potentially containing CxQL queries
-        self.query_groups = self.get_query_groups()
+        self.query_groups = self.retrieve_query_groups()
         # A mapping of project ids to scanned languages (built on demand)
         self.project_language_map = {}
 
@@ -81,7 +81,7 @@ class QueryCollection:
         logger.debug(f'Team->project map: {team_project_map}')
         return team_project_map
 
-    def get_query_groups(self):
+    def retrieve_query_groups(self):
         '''Retrieves CxQL queries from CxSAST.'''
         logger.debug('Retrieving queries...')
         resp = get_query_collection()
