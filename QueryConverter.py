@@ -50,6 +50,7 @@ TEAM = 'Team'
 projects_api = ProjectsAPI()
 scans_api = ScansAPI()
 
+
 class QueryCollection:
     '''A collection of CxQL queries augmented with other data from the CxSAST instance.'''
 
@@ -80,7 +81,6 @@ class QueryCollection:
         logger.debug(f'Team->project map: {team_project_map}')
         return team_project_map
 
-
     def get_query_groups(self):
         '''Retrieves CxQL queries from CxSAST.'''
         logger.debug('Retrieving queries...')
@@ -96,7 +96,6 @@ class QueryCollection:
                               qg[OWNING_TEAM] in self.options.teams)))]
 
         return query_groups
-
 
     def create_new_query_groups(self):
         new_query_groups = []
@@ -297,6 +296,7 @@ def create_project_query_group(tqg, project_id):
     nqg[STATUS] = tqg[STATUS]
 
     return nqg
+
 
 # Debugging functions
 def dump_query_groups(query_groups, message):
