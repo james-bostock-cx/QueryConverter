@@ -304,7 +304,6 @@ def find_query(query_group, query):
             else:
                 logger.debug(f'  Found {q[NAME]} but source code is different')
 
-
     return None
 
 
