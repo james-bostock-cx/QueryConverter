@@ -353,6 +353,7 @@ def dump_query_groups(query_groups, message):
         print(f'  Language       : {qg[LANGUAGE_NAME]}')
         print(f'  OwningTeam     : {qg[OWNING_TEAM]}')
         print(f'  PackageFullName: {qg[PACKAGE_FULL_NAME]}')
+        print(f'  PackageId      : {qg[PACKAGE_ID]}')
         print(f'  PackageType    : {qg[PACKAGE_TYPE]}')
         print(f'  ProjectId      : {qg[PROJECT_ID]}')
         print(f'  Status         : {qg[STATUS]}')
@@ -365,8 +366,11 @@ def dump_queries(queries):
         print(f'    [{i}] Name  : {q[NAME]}')
         md5 = hashlib.md5()
         md5.update(q[SOURCE].encode('utf-8'))
-        print(f'        MD5   : {md5.hexdigest()}')
-        print(f'        Status: {q[STATUS]}')
+        print(f'        ID                : {q[QUERY_ID]}')
+        print(f'        MD5               : {md5.hexdigest()}')
+        print(f'        Package ID        : {q[PACKAGE_ID]}')
+        print(f'        Query Version Code: {q[QUERY_VERSION_CODE]}')
+        print(f'        Status            : {q[STATUS]}')
         i = i + 1
 
 
