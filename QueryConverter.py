@@ -130,7 +130,7 @@ class QueryCollection:
         self.team_query_map = {}
 
         for qg in self.query_groups:
-            print(f'PackageType: {qg[PACKAGE_TYPE]}')
+            logger.debug(f'PackageType: {qg[PACKAGE_TYPE]}')
             for q in qg[QUERIES]:
                 self.query_query_group_map[q[QUERY_ID]] = qg
                 if qg[PACKAGE_TYPE] == PROJECT:
@@ -171,7 +171,7 @@ class QueryCollection:
             # there are multiple overrides for a query, merge the
             # source code.
             for name in query_map:
-                print(f'Processing query: {name}')
+                logger.debug(f'Processing query: {name}')
                 queries = query_map[name]
                 query = queries[0]
                 old_qg = self.query_query_group_map[query[QUERY_ID]]
@@ -193,7 +193,7 @@ class QueryCollection:
                         logger.debug(f'new query group name is {new_qg[PACKAGE_FULL_NAME]}.')
                     new_query_groups.append(new_qg)
 
-                print(f'Query {name} has {len(queries)} overrides')
+                logger.debug(f'Query {name} has {len(queries)} overrides')
                 if len(queries) > 1:
                     source = self.merge_query_source(name, queries)
                 elif old_qg[PACKAGE_TYPE] == TEAM:
