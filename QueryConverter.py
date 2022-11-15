@@ -114,9 +114,7 @@ class QueryCollection:
 
         query_groups = [qg for qg in resp[QUERY_GROUPS]
                         if ((qg[PACKAGE_TYPE] == PROJECT) or
-                            (qg[PACKAGE_TYPE] == TEAM and
-                             (not self.options.teams or
-                              qg[OWNING_TEAM] in self.options.teams)))]
+                            (qg[PACKAGE_TYPE] == TEAM))]
 
         return query_groups
 
@@ -508,6 +506,5 @@ if __name__ == '__main__':
                         dest='pretty_print', default=False)
     parser.add_argument('-p', '--project', type=int, action='append',
                         dest='projects')
-    parser.add_argument('teams', type=int, nargs='*')
     args = parser.parse_args()
     convert_queries(args)
