@@ -201,7 +201,7 @@ class QueryCollection:
                 if len(queries) > 1:
                     source = self.merge_query_source(name, queries)
                 elif old_qg[PACKAGE_TYPE] == TEAM:
-                    source = self.create_query_header(old_qg, queries[0]) + queries[0][SOURCE]
+                    source = self.create_query_header(old_qg, query) + query[SOURCE]
                 else:
                     logger.debug('Skipping project-level query')
                     continue
