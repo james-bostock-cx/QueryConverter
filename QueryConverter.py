@@ -355,7 +355,10 @@ def convert_queries(options):
     if options.pretty_print:
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(new_query_groups)
-    if not options.dry_run:
+
+    if not new_query_groups:
+        logger.debug('No new query groups')
+    elif not options.dry_run:
         save_query_groups(new_query_groups)
         new_query_collection = QueryCollection(options)
         query_groups = new_query_collection.get_query_groups()
