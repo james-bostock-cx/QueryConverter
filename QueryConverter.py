@@ -1,6 +1,7 @@
 """Convert team-level queries to the equivalent project-level queries."""
 
 import argparse
+import datetime
 import hashlib
 import logging
 import pprint
@@ -146,47 +147,113 @@ class QueryCollection:
     def create_new_query_groups(self):
         new_query_groups = []
 
-        for qg in self.query_groups:
-            if qg[PACKAGE_TYPE] == TEAM:
-                logger.debug(f'Processing query group {qg[NAME]} for team {qg[OWNING_TEAM]}')
-                for project_id in self.team_project_map[qg[OWNING_TEAM]]:
-                    project_languages = self.get_project_languages(project_id)
-                    if qg[LANGUAGE] not in project_languages:
-                        logger.debug(f'  {qg[LANGUAGE]} not in project {project_id} languages ({project_languages})')
-                        continue
-                    add_query_group = False
-                    pqg = self.find_project_query_group(new_query_groups, project_id)
-                    if pqg:
-                        logger.debug(f'  Query group already exists for project {project_id}')
+        for project in projects_api.get_all_project_details():
+
+            logger.debug(f'Project {project.project_id} ({project.name})')
+            # A mapping from query name to a list of overrides for the query
+            query_map = {}
+            logger.debug('Project-level queries:')
+            for q in self.project_query_map.get(project.project_id, []):
+                logger.debug(f'    {q[NAME]}')
+                query_map[q[NAME]] = [q]
+
+            for team_id in self.team_ancestry_map[project.team_id]:
+                logger.debug(f'Team {team_id} queries:')
+                for q in self.team_query_map.get(team_id, []):
+                    qg = self.query_query_group_map[q[QUERY_ID]]
+                    if qg[LANGUAGE] in self.get_project_languages(project.project_id):
+                        logger.debug(f'    {q[NAME]}')
+                        entry = query_map.get(q[NAME], [])
+                        entry.append(q)
+                        query_map[q[NAME]] = entry
+
+            # Now that we have all the overrides for each query, where
+            # there are multiple overrides for a query, merge the
+            # source code.
+            for name in query_map:
+                print(f'Processing query: {name}')
+                queries = query_map[name]
+                query = queries[0]
+                old_qg = self.query_query_group_map[query[QUERY_ID]]
+                new_qg_full_name = f'{old_qg[LANGUAGE_NAME]}:CxProject_{project.project_id}:{old_qg[NAME]}'
+                new_qg = None
+                for qg in new_query_groups:
+                    if qg[PACKAGE_FULL_NAME] == new_qg_full_name:
+                        new_qg = qg
+                        logger.debug(f'{new_qg_full_name} already in new_query_groups')
+                        break
+
+                if not new_qg:
+                    if old_qg[PACKAGE_TYPE] == PROJECT:
+                        logger.debug(f'Reusing existing project query group')
+                        new_qg = copy_project_query_group(old_qg)
                     else:
-                        logger.debug(f'  Creating new query group for project {project_id}')
-                        pqg = self.create_project_query_group(qg, project_id)
-                        add_query_group = True
+                        logger.debug(f'Creating project query group for {name}')
+                        new_qg = create_project_query_group(old_qg, project.project_id)
+                        logger.debug(f'new query group name is {new_qg[PACKAGE_FULL_NAME]}.')
+                    new_query_groups.append(new_qg)
 
-                    for q in qg[QUERIES]:
-                        logger.debug(f'  Processing query {q[NAME]}')
-                        # Has this query already been customized at the project level?
-                        oldpg = self.find_project_query_group(query_groups, project_id)
-                        if oldpg and self.find_query_by_name(oldpg, q[NAME]):
-                            logger.debug(f'    Query {q[NAME]} already customized at project level')
-                            continue
-                        logger.debug(f'    Adding query {q[NAME]} to query group')
+                print(f'Query {name} has {len(queries)} overrides')
+                if len(queries) > 1:
+                    source = self.merge_query_source(name, queries)
+                elif old_qg[PACKAGE_TYPE] == TEAM:
+                    source = self.create_query_header(old_qg, queries[0]) + queries[0][SOURCE]
+                else:
+                    logger.debug('Skipping project-level query')
+                    continue
 
-                        if oldpg:
-                            q[PACKAGE_ID] = oldpg[PACKAGE_ID]
-                        else:
-                            q[PACKAGE_ID] = -1
-                        q[QUERY_ID] = 0
-                        q[QUERY_VERSION_CODE] = 0
-                        q[STATUS] = 'New'
-                        pqg[QUERIES].append(q)
+                if old_qg[PACKAGE_TYPE] == TEAM:
+                    # Create a shallow clone of the query to prevent
+                    # code above breaking when we set the query ID to
+                    # zero.
+                    query = dict(query)
+                    query[PACKAGE_ID] = -1
+                    query[QUERY_ID] = 0
+                    query[QUERY_VERSION_CODE] = 0
+                    query[STATUS] = 'New'
+                query[SOURCE] = source
 
-                    # Only add the query group if it has one or more queries
-                    if pqg[QUERIES] and add_query_group:
-                        logger.debug(f'Adding query group {pqg[NAME]}')
-                        new_query_groups.append(pqg)
+                in_query_group = False
+                for q in qg[QUERIES]:
+                    if q[NAME] == name:
+                        in_query_group = True
+                        break
 
-        return new_query_groups
+                if not in_query_group:
+                    new_qg[QUERIES].append(query)
+
+        # Only return query groups that have one or more queries
+        return [qg for qg in new_query_groups if qg[QUERIES]]
+
+    def merge_query_source(self, name, queries):
+        '''Merges the source code of multiple overrides of the same query.
+
+        The name parameter is the name of the query.
+
+        The queries parameter is expected to be a list of queries. If
+        there is a project-level override for the query, it is
+        expected to be the first entry in the queries list. The
+        remaining entries are team-level overrides starting with the
+        team lowest in the team hiearchy and ending with the team
+        highest in the team hierarchy.
+
+        Each query is converted to a Func delegate.
+        '''
+        sources = []
+        func_name = None
+        for q in reversed(queries):
+            qg = self.query_query_group_map[q[QUERY_ID]]
+            source = q[SOURCE].replace('\n', '\n    ')
+            if func_name:
+                source = source.replace(f'base.{name}', func_name)
+            func_name = qg[PACKAGE_FULL_NAME].replace(':', '_')
+            if qg[PACKAGE_TYPE] == TEAM:
+                func_name = func_name.replace('_Team_', f'_Team_{qg[OWNING_TEAM]}_')
+            header = self.create_query_header(qg, q)
+            sources.append(f'{header}\nFunc<CxList> {func_name} = () => {{\n    {source}\n    return result;\n}};\n')
+
+        source = '\n'.join(sources) + f'\nresult = {func_name}();'
+        return source
 
     def get_project_languages(self, project_id):
 
@@ -203,6 +270,27 @@ class QueryCollection:
                 logger.warn(f'No scans found for project {project_id}')
 
         return self.project_language_map[project_id]
+
+    def create_query_header(self, qg, q):
+
+        if qg[PACKAGE_TYPE] == PROJECT:
+            owner = f'PROJECT: {qg[PROJECT_ID]} / '
+        elif qg[PACKAGE_TYPE] == TEAM:
+            owner = f'TEAM: {qg[OWNING_TEAM]} / '
+        header = '''// -------------------------------------------------------
+// FUSIONED - {package_type} LEVEL
+// {owner}
+// QUERY: {query_id} / {query_name}
+// PACKAGE: {package_id} / {package_name}
+// LANGUAGE: {language}
+// ON: {date}
+// -------------------------------------------------------
+'''.format(owner=owner, package_type=qg[PACKAGE_TYPE],
+           query_id=q[QUERY_ID], query_name=q[NAME],
+           package_id=qg[PACKAGE_ID], package_name=qg[NAME],
+           language=qg[LANGUAGE_NAME], date=datetime.datetime.now())
+
+        return header
 
 
 def save_query_groups(query_groups):
@@ -314,6 +402,33 @@ def find_query_by_name(query_group, query_name):
             return q
 
     return None
+
+
+def copy_project_query_group(oqg):
+    """Create a project query group for the specified project using
+    the specified team query group as a template."""
+    nqg = {}
+    if oqg[DESCRIPTION]:
+        nqg[DESCRIPTION] = oqg[DESCRIPTION]
+    else:
+        oqg[DESCRIPTION] = ''
+    nqg[IMPACTS] = []
+    nqg[IS_ENCRYPTED] = oqg[IS_ENCRYPTED]
+    nqg[IS_READONLY] = False
+    nqg[LANGUAGE] = oqg[LANGUAGE]
+    nqg[LANGUAGE_NAME] = oqg[LANGUAGE_NAME]
+    nqg[LANGUAGE_STATE_DATE] = oqg[LANGUAGE_STATE_DATE]
+    nqg[NAME] = oqg[NAME]
+    nqg[OWNING_TEAM] = 0
+    nqg[PACKAGE_FULL_NAME] = oqg[PACKAGE_FULL_NAME]
+    nqg[PACKAGE_ID] = oqg[PACKAGE_ID]
+    nqg[PACKAGE_TYPE] = PROJECT
+    nqg[PACKAGE_TYPE_NAME] = oqg[PACKAGE_TYPE_NAME]
+    nqg[PROJECT_ID] = oqg[PROJECT_ID]
+    nqg[QUERIES] = []
+    nqg[STATUS] = oqg[STATUS]
+
+    return nqg
 
 
 def create_project_query_group(tqg, project_id):
