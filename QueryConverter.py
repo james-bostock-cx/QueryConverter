@@ -199,6 +199,10 @@ class QueryCollection:
                         logger.debug(f'new query group name is {new_qg[PACKAGE_FULL_NAME]}.')
                     new_query_groups.append(new_qg)
 
+                if query[SOURCE].find('// FUSIONED - ') >= 0:
+                    logger.debug('Skipping query as it has already been merged.')
+                    continue
+
                 logger.debug(f'Query {name} has {len(queries)} overrides')
                 if len(queries) > 1:
                     source = self.merge_query_source(name, queries)
