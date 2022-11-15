@@ -122,6 +122,7 @@ class QueryCollection:
 
     def create_query_maps(self):
 
+        logger.debug('Creating query maps')
         # A mapping from project id to a list of custom queries
         self.project_query_map = {}
         # A mapping from query id to owning query group
@@ -145,6 +146,9 @@ class QueryCollection:
                     self.team_query_map[team_id] = queries
 
     def create_new_query_groups(self):
+
+        logger.debug('Creating new query groups')
+
         new_query_groups = []
 
         for project in projects_api.get_all_project_details():
