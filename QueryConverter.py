@@ -417,7 +417,7 @@ def copy_project_query_group(oqg):
     if oqg[DESCRIPTION]:
         nqg[DESCRIPTION] = oqg[DESCRIPTION]
     else:
-        oqg[DESCRIPTION] = ''
+        nqg[DESCRIPTION] = ''
     nqg[IMPACTS] = []
     nqg[IS_ENCRYPTED] = oqg[IS_ENCRYPTED]
     nqg[IS_READONLY] = False
