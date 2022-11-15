@@ -130,7 +130,7 @@ class QueryCollection:
         self.team_query_map = {}
 
         for qg in self.query_groups:
-            logger.debug(f'PackageType: {qg[PACKAGE_TYPE]}')
+            logger.debug(f'PackageFullName: {qg[PACKAGE_FULL_NAME]}')
             for q in qg[QUERIES]:
                 self.query_query_group_map[q[QUERY_ID]] = qg
                 if qg[PACKAGE_TYPE] == PROJECT:
