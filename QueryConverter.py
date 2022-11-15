@@ -154,6 +154,10 @@ class QueryCollection:
         for project in projects_api.get_all_project_details():
 
             logger.debug(f'Project {project.project_id} ({project.name})')
+            if self.options.projects and project.project_id not in self.options.projects:
+                logger.debug('Skipping project')
+                continue
+
             # A mapping from query name to a list of overrides for the query
             query_map = {}
             logger.debug('Project-level queries:')
@@ -502,6 +506,8 @@ if __name__ == '__main__':
                         default=False)
     parser.add_argument('--pretty-print', action='store_true',
                         dest='pretty_print', default=False)
+    parser.add_argument('-p', '--project', type=int, action='append',
+                        dest='projects')
     parser.add_argument('teams', type=int, nargs='*')
     args = parser.parse_args()
     convert_queries(args)
