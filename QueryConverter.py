@@ -478,32 +478,32 @@ def create_project_query_group(tqg, project_id):
 
 # Debugging functions
 def dump_query_groups(query_groups, message):
-    print('------------------------------')
-    print(f'{message}')
-    print('------------------------------')
+    logger.debug('------------------------------')
+    logger.debug(f'{message}')
+    logger.debug('------------------------------')
     for qg in query_groups:
-        print(f'Name: {qg[NAME]}')
-        print(f'  Language       : {qg[LANGUAGE_NAME]}')
-        print(f'  OwningTeam     : {qg[OWNING_TEAM]}')
-        print(f'  PackageFullName: {qg[PACKAGE_FULL_NAME]}')
-        print(f'  PackageId      : {qg[PACKAGE_ID]}')
-        print(f'  PackageType    : {qg[PACKAGE_TYPE]}')
-        print(f'  ProjectId      : {qg[PROJECT_ID]}')
-        print(f'  Status         : {qg[STATUS]}')
+        logger.debug(f'Name: {qg[NAME]}')
+        logger.debug(f'  Language       : {qg[LANGUAGE_NAME]}')
+        logger.debug(f'  OwningTeam     : {qg[OWNING_TEAM]}')
+        logger.debug(f'  PackageFullName: {qg[PACKAGE_FULL_NAME]}')
+        logger.debug(f'  PackageId      : {qg[PACKAGE_ID]}')
+        logger.debug(f'  PackageType    : {qg[PACKAGE_TYPE]}')
+        logger.debug(f'  ProjectId      : {qg[PROJECT_ID]}')
+        logger.debug(f'  Status         : {qg[STATUS]}')
         dump_queries(qg[QUERIES])
 
 
 def dump_queries(queries):
     i = 0
     for q in queries:
-        print(f'    [{i}] Name  : {q[NAME]}')
+        logger.debug(f'    [{i}] Name  : {q[NAME]}')
         md5 = hashlib.md5()
         md5.update(q[SOURCE].encode('utf-8'))
-        print(f'        ID                : {q[QUERY_ID]}')
-        print(f'        MD5               : {md5.hexdigest()}')
-        print(f'        Package ID        : {q[PACKAGE_ID]}')
-        print(f'        Query Version Code: {q[QUERY_VERSION_CODE]}')
-        print(f'        Status            : {q[STATUS]}')
+        logger.debug(f'        ID                : {q[QUERY_ID]}')
+        logger.debug(f'        MD5               : {md5.hexdigest()}')
+        logger.debug(f'        Package ID        : {q[PACKAGE_ID]}')
+        logger.debug(f'        Query Version Code: {q[QUERY_VERSION_CODE]}')
+        logger.debug(f'        Status            : {q[STATUS]}')
         i = i + 1
 
 
