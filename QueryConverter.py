@@ -229,13 +229,16 @@ class QueryCollection:
                 query[SOURCE] = source
 
                 in_query_group = False
-                for q in qg[QUERIES]:
+                for q in new_qg[QUERIES]:
                     if q[NAME] == name:
                         in_query_group = True
                         break
 
                 if not in_query_group:
+                    logger.debug(f'Appending {query[NAME]}')
                     new_qg[QUERIES].append(query)
+                else:
+                    logger.warn(f'Not appending {query[NAME]} as already in query group')
 
         # Only return query groups that have one or more queries
         return [qg for qg in new_query_groups if qg[QUERIES]]
