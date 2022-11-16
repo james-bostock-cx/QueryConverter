@@ -264,7 +264,7 @@ class QueryCollection:
             source = q[SOURCE].replace('\n', '\n    ')
             if func_name:
                 source = source.replace(f'base.{name}', f'/*base.{name}*/{func_name}')
-            func_name = qg[PACKAGE_FULL_NAME].replace(':', '_')
+            func_name = f'{qg[PACKAGE_FULL_NAME].replace(":", "_")}__{q[NAME]}'
             if qg[PACKAGE_TYPE] == TEAM:
                 func_name = func_name.replace('_Team_', f'_Team_{qg[OWNING_TEAM]}_')
             header = self.create_query_header(qg, q)
