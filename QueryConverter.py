@@ -509,14 +509,18 @@ def dump_queries(queries):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Convert team-level CxSAST queries to project-level queries')
     parser.add_argument('--debug', action='store_true', dest='debug',
-                        default=False)
+                        default=False,
+                        help='Enable debug output')
     parser.add_argument('--dry-run', action='store_true', dest='dry_run',
-                        default=False)
+                        default=False,
+                        help='Enable dry run mode (no changes are made to the CxSAST instance)')
     parser.add_argument('--pretty-print', action='store_true',
-                        dest='pretty_print', default=False)
+                        dest='pretty_print', default=False,
+                        help='Pretty print the old and new query groups')
     parser.add_argument('-p', '--project', type=int, action='append',
-                        dest='projects')
+                        dest='projects', metavar='PROJECT',
+                        help='Only modify queries for the specified project (this option may be provided multiple times)')
     args = parser.parse_args()
     convert_queries(args)
