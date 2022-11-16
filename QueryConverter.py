@@ -64,12 +64,10 @@ class QueryCollection:
 
         # Configuration options
         self.options = options
-        # A mapping from team id to associated projects
-        self.team_project_map = self.create_team_project_map()
-        # A mapping from team ids to lists of ancestor team ids
-        self.team_ancestry_map = self.create_team_ancestry_map()
-        # A list of CxQL query groups, each potentially containing CxQL queries
-        self.query_groups = self.retrieve_query_groups()
+
+        self.create_project_maps()
+        self.create_team_maps()
+        self.retrieve_query_groups()
         self.create_query_maps()
         # A mapping of project ids to scanned languages (built on demand)
         self.project_language_map = {}
@@ -78,25 +76,28 @@ class QueryCollection:
 
         return self.query_groups
 
-    def create_team_project_map(self):
+    def create_project_maps(self):
         '''Creates a mapping from team ids to projects.'''
-        logger.debug('Creating team->project map')
-        team_project_map = {}
+        logger.debug('Creating project maps')
+        self.project_map = {}
+        self.team_project_map = {}
         for proj in projects_api.get_all_project_details():
-            proj_list = team_project_map.get(proj.team_id, [])
+            self.project_map[proj.project_id] = proj
+            proj_list = self.team_project_map.get(proj.team_id, [])
             proj_list.append(proj.project_id)
-            team_project_map[proj.team_id] = proj_list
+            self.team_project_map[proj.team_id] = proj_list
 
-        logger.debug(f'Team->project map: {team_project_map}')
-        return team_project_map
+        logger.debug(f'Team->project map: {self.team_project_map}')
 
-    def create_team_ancestry_map(self):
+    def create_team_maps(self):
 
-        logger.debug('Creating team ancestry map')
-        team_ancestry_map = {}
+        logger.debug('Creating team maps')
+        self.team_ancestry_map = {}
+        self.team_map = {}
 
         all_teams = team_api.get_all_teams()
         for team in all_teams:
+            self.team_map[team.team_id] = team
             ancestry = [team.team_id]
             parent_id = team.parent_id
             while parent_id > 0:
@@ -104,10 +105,9 @@ class QueryCollection:
                 for team2 in all_teams:
                     if team2.team_id == parent_id:
                         parent_id = team2.parent_id
-            team_ancestry_map[team.team_id] = ancestry
+            self.team_ancestry_map[team.team_id] = ancestry
 
-        logger.debug(f'Team ancestry map: {team_ancestry_map}')
-        return team_ancestry_map
+        logger.debug(f'Team ancestry map: {self.team_ancestry_map}')
 
     def retrieve_query_groups(self):
         '''Retrieves CxQL queries from CxSAST.'''
@@ -117,11 +117,9 @@ class QueryCollection:
             logger.error(f'Error retrieving queries: {resp[ERROR_MESSAGE]}')
             sys.exit(1)
 
-        query_groups = [qg for qg in resp[QUERY_GROUPS]
-                        if ((qg[PACKAGE_TYPE] == PROJECT) or
-                            (qg[PACKAGE_TYPE] == TEAM))]
-
-        return query_groups
+        self.query_groups = [qg for qg in resp[QUERY_GROUPS]
+                             if ((qg[PACKAGE_TYPE] == PROJECT) or
+                                 (qg[PACKAGE_TYPE] == TEAM))]
 
     def create_query_maps(self):
 
