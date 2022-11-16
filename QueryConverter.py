@@ -287,9 +287,11 @@ class QueryCollection:
     def create_query_header(self, qg, q):
 
         if qg[PACKAGE_TYPE] == PROJECT:
-            owner = f'PROJECT: {qg[PROJECT_ID]} / '
+            project_id = qg[PROJECT_ID]
+            owner = f'PROJECT: {project_id} / {self.project_map[project_id].name}'
         elif qg[PACKAGE_TYPE] == TEAM:
-            owner = f'TEAM: {qg[OWNING_TEAM]} / '
+            owning_team = qg[OWNING_TEAM]
+            owner = f'TEAM: {owning_team} / {self.team_map[owning_team].full_name}'
         header = '''// -------------------------------------------------------
 // FUSIONED - {package_type} LEVEL
 // {owner}
