@@ -159,29 +159,31 @@ class QueryCollection:
                 logger.debug('Skipping project')
                 continue
 
-            # A mapping from query name to a list of overrides for the query
+            # A mapping from query name and language to a list of
+            # overrides for the query
             query_map = {}
             logger.debug('Project-level queries:')
             for q in self.project_query_map.get(project.project_id, []):
-                logger.debug(f'    {q[NAME]}')
-                query_map[q[NAME]] = [q]
+                qg = self.query_query_group_map[q[QUERY_ID]]
+                logger.debug(f'    {q[NAME]} ({qg[LANGUAGE_NAME]})')
+                query_map[(q[NAME], qg[LANGUAGE_NAME])] = [q]
 
             for team_id in self.team_ancestry_map[project.team_id]:
                 logger.debug(f'Team {team_id} queries:')
                 for q in self.team_query_map.get(team_id, []):
                     qg = self.query_query_group_map[q[QUERY_ID]]
                     if qg[LANGUAGE] in self.get_project_languages(project.project_id):
-                        logger.debug(f'    {q[NAME]}')
-                        entry = query_map.get(q[NAME], [])
+                        logger.debug(f'    {q[NAME]} ({qg[LANGUAGE_NAME]})')
+                        entry = query_map.get((q[NAME], qg[LANGUAGE_NAME]), [])
                         entry.append(q)
-                        query_map[q[NAME]] = entry
+                        query_map[(q[NAME], qg[LANGUAGE_NAME])] = entry
 
-            # Now that we have all the overrides for each query, where
-            # there are multiple overrides for a query, merge the
-            # source code.
-            for name in query_map:
-                logger.debug(f'Processing query: {name}')
-                queries = query_map[name]
+            # Now that we have all the overrides for each
+            # query/language combination, where there are multiple
+            # overrides for a query, merge the source code.
+            for name, language in query_map:
+                logger.debug(f'Processing query: {name} ({language})')
+                queries = query_map[(name, language)]
                 query = queries[0]
                 old_qg = self.query_query_group_map[query[QUERY_ID]]
                 new_qg_full_name = f'{old_qg[LANGUAGE_NAME]}:CxProject_{project.project_id}:{old_qg[NAME]}'
