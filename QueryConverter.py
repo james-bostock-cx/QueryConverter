@@ -298,7 +298,7 @@ class QueryCollection:
 // LANGUAGE: {language}
 // ON: {date}
 // -------------------------------------------------------
-'''.format(owner=owner, package_type=qg[PACKAGE_TYPE],
+'''.format(owner=owner, package_type=qg[PACKAGE_TYPE].upper(),
            query_id=q[QUERY_ID], query_name=q[NAME],
            package_id=qg[PACKAGE_ID], package_name=qg[NAME],
            language=qg[LANGUAGE_NAME], date=datetime.datetime.now())
