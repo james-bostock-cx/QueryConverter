@@ -13,13 +13,17 @@ from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI, ScansAPI, TeamAPI
 _version = '0.1.0'
 
 # Logging
-handler = logging.StreamHandler()
-handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter(fmt='%(asctime)s: %(levelname)s: %(name)s: %(msg)s')
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+stream_handler.setFormatter(formatter)
+file_handler = logging.FileHandler(f'QueryConverter-{datetime.date.today()}.log')
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
 logger = logging.getLogger('QueryConverter')
 logger.setLevel(logging.DEBUG)
-logger.addHandler(handler)
-formatter = logging.Formatter(fmt='%(asctime)s: %(levelname)s: %(name)s: %(msg)s')
-handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+logger.addHandler(file_handler)
 
 # Constants
 CX_DESCRIPTION_ID = 'CxDescriptionID'
