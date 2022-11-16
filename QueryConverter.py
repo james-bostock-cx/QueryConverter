@@ -88,6 +88,7 @@ class QueryCollection:
 
     def create_team_ancestry_map(self):
 
+        logger.debug('Creating team ancestry map')
         team_ancestry_map = {}
 
         all_teams = team_api.get_all_teams()
@@ -101,7 +102,7 @@ class QueryCollection:
                         parent_id = team2.parent_id
             team_ancestry_map[team.team_id] = ancestry
 
-        logger.debug(f'team_ancestry_map: {team_ancestry_map}')
+        logger.debug(f'Team ancestry map: {team_ancestry_map}')
         return team_ancestry_map
 
     def retrieve_query_groups(self):
