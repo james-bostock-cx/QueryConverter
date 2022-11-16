@@ -202,7 +202,7 @@ class QueryCollection:
                         logger.debug(f'new query group name is {new_qg[PACKAGE_FULL_NAME]}.')
                     new_query_groups.append(new_qg)
 
-                if query[SOURCE].find('// FUSIONED - ') >= 0:
+                if query[SOURCE].find('// MERGED - ') >= 0:
                     logger.debug('Skipping query as it has already been merged.')
                     continue
 
@@ -293,7 +293,7 @@ class QueryCollection:
             owning_team = qg[OWNING_TEAM]
             owner = f'TEAM: {owning_team} / {self.team_map[owning_team].full_name}'
         header = '''// -------------------------------------------------------
-// FUSIONED - {package_type} LEVEL
+// MERGED - {package_type} LEVEL
 // {owner}
 // QUERY: {query_id} / {query_name}
 // PACKAGE: {package_id} / {package_name}
