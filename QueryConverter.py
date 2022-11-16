@@ -497,10 +497,14 @@ def dump_queries(queries):
     i = 0
     for q in queries:
         logger.debug(f'    [{i}] Name  : {q[NAME]}')
-        md5 = hashlib.md5()
-        md5.update(q[SOURCE].encode('utf-8'))
+        if q[SOURCE]:
+            md5 = hashlib.md5()
+            md5.update(q[SOURCE].encode('utf-8'))
+            hexdigest = md5.hexdigest()
+        else:
+            hexdigest = 'No source found'
         logger.debug(f'        ID                : {q[QUERY_ID]}')
-        logger.debug(f'        MD5               : {md5.hexdigest()}')
+        logger.debug(f'        MD5               : {hexdigest}')
         logger.debug(f'        Package ID        : {q[PACKAGE_ID]}')
         logger.debug(f'        Query Version Code: {q[QUERY_VERSION_CODE]}')
         logger.debug(f'        Status            : {q[STATUS]}')
