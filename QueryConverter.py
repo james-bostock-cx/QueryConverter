@@ -263,7 +263,7 @@ class QueryCollection:
             qg = self.query_query_group_map[q[QUERY_ID]]
             source = q[SOURCE].replace('\n', '\n    ')
             if func_name:
-                source = source.replace(f'base.{name}', func_name)
+                source = source.replace(f'base.{name}', f'/*base.{name}*/{func_name}')
             func_name = qg[PACKAGE_FULL_NAME].replace(':', '_')
             if qg[PACKAGE_TYPE] == TEAM:
                 func_name = func_name.replace('_Team_', f'_Team_{qg[OWNING_TEAM]}_')
