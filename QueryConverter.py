@@ -4,6 +4,7 @@ import argparse
 import datetime
 import hashlib
 import logging
+from pathlib import Path
 import pprint
 import sys
 
@@ -352,6 +353,25 @@ def validate_query_groups(query_groups, new_query_groups):
         logger.error(f'Failed query groups: {qg_failed}, failed queries: {q_failed}')
 
 
+def save_queries(query_groups):
+    '''Writes the queries in the specified query groups to disk.
+
+    Each query is written to a separate file whose name is a
+    combination of the package's ful name (translating colons to
+    underscores) and the query name.
+    '''
+
+    dir = Path('queries')
+    dir.mkdir()
+    for qg in query_groups:
+        for q in qg[QUERIES]:
+            if q[SOURCE]:
+                file_name = f'{qg[PACKAGE_FULL_NAME].replace(":", "_")}__{q[NAME]}'
+                path = Path(dir, file_name)
+                with path.open('x') as f:
+                    f.write(q[SOURCE])
+
+
 def convert_queries(options):
 
     query_collection = QueryCollection(options)
@@ -365,6 +385,8 @@ def convert_queries(options):
     if options.pretty_print:
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(new_query_groups)
+    if options.save_queries:
+        save_queries(new_query_groups)
 
     if not new_query_groups:
         logger.debug('No new query groups')
@@ -531,5 +553,8 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--project', type=int, action='append',
                         dest='projects', metavar='PROJECT',
                         help='Only modify queries for the specified project (this option may be provided multiple times)')
+    parser.add_argument('-s', '--save-queries', action='store_true',
+                        default=False,
+                        help='Write source for each new query to disk')
     args = parser.parse_args()
     convert_queries(args)
