@@ -11,7 +11,7 @@ import sys
 from CheckmarxPythonSDK.CxPortalSoapApiSDK import get_query_collection, upload_queries
 from CheckmarxPythonSDK.CxRestAPISDK import ProjectsAPI, ScansAPI, TeamAPI
 
-_version = '0.4.1'
+_version = '0.4.2'
 
 # Logging
 formatter = logging.Formatter(fmt='%(asctime)s: %(levelname)s: %(name)s: %(msg)s')
