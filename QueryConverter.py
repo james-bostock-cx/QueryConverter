@@ -205,6 +205,9 @@ class QueryCollection:
                         logger.debug(f'new query group name is {new_qg[PACKAGE_FULL_NAME]}.')
                     new_query_groups.append(new_qg)
 
+                if not query[SOURCE]:
+                    logger.debug('Skipping query as it has no source code.')
+                    continue
                 if query[SOURCE].find('// MERGED - ') >= 0:
                     logger.debug('Skipping query as it has already been merged.')
                     continue
