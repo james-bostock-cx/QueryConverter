@@ -167,7 +167,10 @@ class QueryCollection:
             for q in self.project_query_map.get(project.project_id, []):
                 qg = self.query_query_group_map[q[QUERY_ID]]
                 logger.debug(f'    {q[NAME]} ({qg[LANGUAGE_NAME]})')
-                query_map[(q[NAME], qg[LANGUAGE_NAME])] = [q]
+                if qg[LANGUAGE] in self.get_project_languages(project.project_id):
+                    query_map[(q[NAME], qg[LANGUAGE_NAME])] = [q]
+                else:
+                    logger.debug(f'{qg[LANGUAGE_NAME]} not in scanned languages')
 
             for team_id in self.team_ancestry_map[project.team_id]:
                 logger.debug(f'Team {team_id} queries:')
@@ -178,6 +181,8 @@ class QueryCollection:
                         entry = query_map.get((q[NAME], qg[LANGUAGE_NAME]), [])
                         entry.append(q)
                         query_map[(q[NAME], qg[LANGUAGE_NAME])] = entry
+                    else:
+                        logger.debug(f'{qg[LANGUAGE_NAME]} not in scanned languages')
 
             # Now that we have all the overrides for each
             # query/language combination, where there are multiple
