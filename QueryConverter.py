@@ -218,7 +218,7 @@ class QueryCollection:
                 elif old_qg[PACKAGE_TYPE] == TEAM:
                     source = self.create_query_header(old_qg, query) + '\n' + query[SOURCE]
                 else:
-                    logger.debug('Skipping project-level query')
+                    logger.debug('Skipping query customized only at project query')
                     continue
 
                 if old_qg[PACKAGE_TYPE] == TEAM:
